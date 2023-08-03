@@ -6,5 +6,5 @@ local argocd = import 'lib/argocd.libjsonnet';
 local app = argocd.App('etcd', params.namespace);
 
 {
-  etcd: app,
+  [inv.parameters._instance]: app,
 }

@@ -2,6 +2,7 @@
 
 The parent key for all of the following parameters is `etcd`.
 
+
 == `namespace`
 
 [horizontal]
@@ -10,10 +11,76 @@ default:: `syn-etcd`
 
 The namespace in which to deploy this component.
 
+== `namespaceAnnotations`
 
-== Example
+[horizontal]
+type:: dictionary
+default:: `{}`
 
+Annotations to add to the namespace.
+
+
+== `namespaceLabels`
+
+[horizontal]
+type:: dictionary
+default:: `{}`
+
+Labels to add to the namespace.
+
+
+== `secrets`
+
+[horizontal]
+type:: dictionary
+default:: `{}`
+example::
++
 [source,yaml]
 ----
-namespace: example-namespace
+secrets:
+  etcd-etcd-root-auth:
+    stringData:
+      password:
 ----
+
+A key-value map defining multiple `Secret` for referencing in `secrets`.
+Each entry will generate a `Secret` with the key as its name.
+
+
+== `images`
+
+[horizontal]
+type:: dictionary
+default:: https://github.com/projectsyn/component-etcd/blob/master/class/defaults.yml[See `class/defaults.yml`]
+
+Dictionary containing the container images used by this component.
+
+
+== `charts`
+
+[horizontal]
+type:: dictionary
+default:: https://github.com/projectsyn/component-etcd/blob/master/class/defaults.yml[See `class/defaults.yml`]
+
+Dictionary containing the charts used by this component.
+
+
+== `helm_release_name`
+
+[horizontal]
+type:: string
+default:: `${_instance}`
+
+Release name for the Helm chart.
+
+
+== `helm_values`
+
+[horizontal]
+type:: dictionary
+default:: https://github.com/projectsyn/component-etcd/blob/master/class/defaults.yml[See `class/defaults.yml`]
+
+Dictionary containing the values passed to the Helm chart.
+
+Defaults are upstream defaults, with changes related to security and overrides for values generated on the fly by Helm.
