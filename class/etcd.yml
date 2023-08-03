@@ -23,6 +23,6 @@ parameters:
         input_paths:
           - dependencies/etcd/${_instance}/helmcharts/etcd/${etcd:charts:etcd:version}/
         helm_params:
-          name: ${etcd:release_name}
+          name: ${etcd:helm_release_name}
           namespace: ${etcd:namespace}
         helm_values: ${etcd:helm_values}

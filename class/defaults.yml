@@ -5,8 +5,6 @@ parameters:
 
     namespace: syn-${_instance}
 
-    release_name: ${_instance}
-
     secrets: {}
 
     images:
@@ -24,6 +22,7 @@ parameters:
         source: https://charts.bitnami.com/bitnami
         version: "9.1.0"
 
+    helm_release_name: ${_instance}
     helm_values:
       image: ${etcd:images:etcd}
       volumePermissions:
