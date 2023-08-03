@@ -4,6 +4,8 @@ parameters:
       multi_instance: true
 
     namespace: syn-${_instance}
+    namespaceAnnotations: {}
+    namespaceLabels: {}
 
     secrets: {}
 

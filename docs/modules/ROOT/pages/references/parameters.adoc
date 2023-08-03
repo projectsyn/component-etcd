@@ -11,6 +11,23 @@ default:: `syn-etcd`
 
 The namespace in which to deploy this component.
 
+== `namespaceAnnotations`
+
+[horizontal]
+type:: dictionary
+default:: `{}`
+
+Annotations to add to the namespace.
+
+
+== `namespaceLabels`
+
+[horizontal]
+type:: dictionary
+default:: `{}`
+
+Labels to add to the namespace.
+
 
 == `secrets`
 

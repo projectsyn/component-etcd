@@ -17,7 +17,7 @@ parameters:
         input_type: jsonnet
         output_path: etcd/${_instance}
 
-      - output_path: ${_instance}/01_etcd_helmchart
+      - output_path: etcd/${_instance}/10_chart
         input_type: helm
         output_type: yaml
         input_paths:

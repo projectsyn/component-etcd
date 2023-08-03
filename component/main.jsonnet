@@ -13,5 +13,11 @@ local secrets = com.generateResources(
 
 // Define outputs below
 {
-  secrets: secrets,
+  '00_namespace': kube.Namespace(params.namespace) {
+    metadata+: {
+      annotations+: params.namespaceAnnotations,
+      labels+: params.namespaceLabels,
+    },
+  },
+  '01_secrets': secrets,
 }
