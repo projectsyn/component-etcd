@@ -1,0 +1,4 @@
+parameters:
+  etcd:
+    =_metadata: {}
+    namespace: syn-etcd
