@@ -1,4 +1,44 @@
 parameters:
   etcd:
-    =_metadata: {}
-    namespace: syn-etcd
+    =_metadata:
+      multi_instance: true
+
+    namespace: syn-${_instance}
+
+    release_name: ${_instance}
+
+    secrets: {}
+
+    images:
+      etcd:
+        registry: docker.io
+        repository: bitnami/etcd
+        tag: 3.5.9-debian-11-r76
+      os-shell:
+        registry: docker.io
+        repository: bitnami/os-shell
+        tag: 11-debian-11-r16
+
+    charts:
+      etcd:
+        source: https://charts.bitnami.com/bitnami
+        version: "9.1.0"
+
+    helm_values:
+      image: ${etcd:images:etcd}
+      volumePermissions:
+        image: ${etcd:images:os-shell}
+      auth:
+        rbac:
+          allowNoneAuthentication: false
+          existingSecret: "${_instance}-etcd-root-auth"
+          existingSecretPasswordKey: "password"
+        client:
+          secureTransport: true
+          existingSecret: "${_instance}-etcd-client-auth"
+        peer:
+          secureTransport: true
+          existingSecret: "${_instance}-etcd-peer-auth"
+        token:
+          privateKey:
+            existingSecret: "${_instance}-etcd-token-private-key"

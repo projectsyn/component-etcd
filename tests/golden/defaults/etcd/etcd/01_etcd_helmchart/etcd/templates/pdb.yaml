@@ -1,0 +1,17 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    app.kubernetes.io/instance: etcd
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: etcd
+    helm.sh/chart: etcd-9.1.0
+  name: etcd
+  namespace: syn-etcd
+spec:
+  minAvailable: 51%
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: etcd
+      app.kubernetes.io/instance: etcd
+      app.kubernetes.io/name: etcd

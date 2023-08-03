@@ -1,5 +1,12 @@
 parameters:
   kapitan:
+    dependencies:
+      - type: helm
+        chart_name: etcd
+        version: ${etcd:charts:etcd:version}
+        source: ${etcd:charts:etcd:source}
+        output_path: dependencies/etcd/${_instance}/helmcharts/etcd/${etcd:charts:etcd:version}/
+
     compile:
       - input_paths:
           - ${_base_directory}/component/app.jsonnet
@@ -8,4 +15,14 @@ parameters:
       - input_paths:
           - ${_base_directory}/component/main.jsonnet
         input_type: jsonnet
-        output_path: etcd/
+        output_path: etcd/${_instance}
+
+      - output_path: ${_instance}/01_etcd_helmchart
+        input_type: helm
+        output_type: yaml
+        input_paths:
+          - dependencies/etcd/${_instance}/helmcharts/etcd/${etcd:charts:etcd:version}/
+        helm_params:
+          name: ${etcd:release_name}
+          namespace: ${etcd:namespace}
+        helm_values: ${etcd:helm_values}
