@@ -3,7 +3,7 @@ local inv = kap.inventory();
 local params = inv.parameters.etcd;
 local argocd = import 'lib/argocd.libjsonnet';
 
-local app = argocd.App('etcd', params.namespace);
+local app = argocd.App(inv.parameters._instance, params.namespace);
 
 {
   [inv.parameters._instance]: app,
