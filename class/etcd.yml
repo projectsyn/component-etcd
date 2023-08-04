@@ -15,9 +15,9 @@ parameters:
       - input_paths:
           - ${_base_directory}/component/main.jsonnet
         input_type: jsonnet
-        output_path: etcd/${_instance}
+        output_path: ${_instance}
 
-      - output_path: etcd/${_instance}/10_chart
+      - output_path: ${_instance}/10_chart
         input_type: helm
         output_type: yaml
         input_paths:
