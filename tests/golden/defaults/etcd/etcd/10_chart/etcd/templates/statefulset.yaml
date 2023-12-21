@@ -6,7 +6,8 @@ metadata:
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: etcd
-    helm.sh/chart: etcd-9.1.0
+    app.kubernetes.io/version: 3.5.11
+    helm.sh/chart: etcd-9.8.0
   name: etcd
   namespace: syn-etcd
 spec:
@@ -26,7 +27,8 @@ spec:
         app.kubernetes.io/instance: etcd
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: etcd
-        helm.sh/chart: etcd-9.1.0
+        app.kubernetes.io/version: 3.5.11
+        helm.sh/chart: etcd-9.8.0
     spec:
       affinity:
         nodeAffinity: null
@@ -36,6 +38,7 @@ spec:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
+                    app.kubernetes.io/component: etcd
                     app.kubernetes.io/instance: etcd
                     app.kubernetes.io/name: etcd
                 topologyKey: kubernetes.io/hostname
@@ -129,8 +132,14 @@ spec:
             requests: {}
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
             runAsNonRoot: true
             runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
             - mountPath: /bitnami/etcd
               name: data
