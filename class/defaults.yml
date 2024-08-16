@@ -17,7 +17,7 @@ parameters:
       os-shell:
         registry: docker.io
         repository: bitnami/os-shell
-        tag: 11-debian-11-r16
+        tag: 11-debian-11-r112
 
     charts:
       etcd:
