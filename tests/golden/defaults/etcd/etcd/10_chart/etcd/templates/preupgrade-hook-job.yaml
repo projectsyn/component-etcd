@@ -1,29 +1,24 @@
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: batch/v1
+kind: Job
 metadata:
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
   labels:
-    app.kubernetes.io/component: etcd
+    app.kubernetes.io/component: etcd-pre-upgrade-job
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: etcd
     app.kubernetes.io/version: 3.6.0
     helm.sh/chart: etcd-12.0.0
-  name: etcd
+  name: etcd-pre-upgrade
   namespace: syn-etcd
 spec:
-  podManagementPolicy: Parallel
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: etcd
-      app.kubernetes.io/instance: etcd
-      app.kubernetes.io/name: etcd
-  serviceName: etcd-headless
   template:
     metadata:
       annotations: null
       labels:
-        app.kubernetes.io/component: etcd
+        app.kubernetes.io/component: etcd-pre-upgrade-job
         app.kubernetes.io/instance: etcd
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: etcd
@@ -38,91 +33,38 @@ spec:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app.kubernetes.io/component: etcd
+                    app.kubernetes.io/component: etcd-pre-upgrade-job
                     app.kubernetes.io/instance: etcd
                     app.kubernetes.io/name: etcd
                 topologyKey: kubernetes.io/hostname
               weight: 1
       automountServiceAccountToken: false
       containers:
-        - env:
+        - args:
+            - /opt/bitnami/scripts/etcd/preupgrade.sh
+          command:
+            - /opt/bitnami/scripts/etcd/entrypoint.sh
+          env:
             - name: BITNAMI_DEBUG
               value: 'false'
-            - name: MY_POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: MY_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: MY_STS_NAME
-              value: etcd
             - name: ETCD_ON_K8S
               value: 'yes'
-            - name: ETCD_START_FROM_SNAPSHOT
-              value: 'no'
-            - name: ETCD_DISASTER_RECOVERY
-              value: 'no'
-            - name: ETCD_NAME
-              value: $(MY_POD_NAME)
             - name: ETCD_DATA_DIR
               value: /bitnami/etcd/data
-            - name: ETCD_LOG_LEVEL
-              value: info
-            - name: ALLOW_NONE_AUTHENTICATION
-              value: 'no'
             - name: ETCD_ROOT_PASSWORD_FILE
               value: /opt/bitnami/etcd/secrets/password
-            - name: ETCD_AUTH_TOKEN
-              value: jwt,priv-key=/opt/bitnami/etcd/certs/token/jwt-token.pem,sign-method=RS256,ttl=10m
-            - name: ETCD_ADVERTISE_CLIENT_URLS
-              value: https://$(MY_POD_NAME).etcd-headless.syn-etcd.svc.cluster.local:2379,https://etcd.syn-etcd.svc.cluster.local:2379
-            - name: ETCD_LISTEN_CLIENT_URLS
-              value: https://0.0.0.0:2379
-            - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-              value: https://$(MY_POD_NAME).etcd-headless.syn-etcd.svc.cluster.local:2380
-            - name: ETCD_LISTEN_PEER_URLS
-              value: https://0.0.0.0:2380
-            - name: ETCD_CLUSTER_DOMAIN
-              value: etcd-headless.syn-etcd.svc.cluster.local
+            - name: ETCD_INITIAL_CLUSTER
+              value: etcd-0=https://etcd-0.etcd-headless.syn-etcd.svc.cluster.local:2379
             - name: ETCD_CERT_FILE
               value: /opt/bitnami/etcd/certs/client/cert.pem
             - name: ETCD_KEY_FILE
               value: /opt/bitnami/etcd/certs/client/key.pem
-            - name: ETCD_PEER_CERT_FILE
-              value: /opt/bitnami/etcd/certs/peer/cert.pem
-            - name: ETCD_PEER_KEY_FILE
-              value: /opt/bitnami/etcd/certs/peer/key.pem
+            - name: ETCD_EXTRA_AUTH_FLAGS
+              value: --insecure-skip-tls-verify
           envFrom: null
           image: docker.io/bitnami/etcd:3.5.21-debian-12-r6
           imagePullPolicy: IfNotPresent
-          livenessProbe:
-            exec:
-              command:
-                - /opt/bitnami/scripts/etcd/healthcheck.sh
-            failureThreshold: 5
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 5
-          name: etcd
-          ports:
-            - containerPort: 2379
-              name: client
-              protocol: TCP
-            - containerPort: 2380
-              name: peer
-              protocol: TCP
-          readinessProbe:
-            exec:
-              command:
-                - /opt/bitnami/scripts/etcd/healthcheck.sh
-            failureThreshold: 5
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
+          name: pre-upgrade-job
           resources:
             limits:
               cpu: 375m
@@ -135,6 +77,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
+              add: []
               drop:
                 - ALL
             privileged: false
@@ -152,25 +95,20 @@ spec:
             - mountPath: /tmp
               name: empty-dir
               subPath: tmp-dir
-            - mountPath: /bitnami/etcd
-              name: data
             - mountPath: /opt/bitnami/etcd/certs/token/
               name: etcd-jwt-token
               readOnly: true
             - mountPath: /opt/bitnami/etcd/certs/client/
               name: etcd-client-certs
               readOnly: true
-            - mountPath: /opt/bitnami/etcd/certs/peer/
-              name: etcd-peer-certs
-              readOnly: true
             - mountPath: /opt/bitnami/etcd/secrets
               name: etcd-secrets
+      restartPolicy: Never
       securityContext:
         fsGroup: 1001
         fsGroupChangePolicy: Always
         supplementalGroups: []
         sysctls: []
-      serviceAccountName: etcd
       volumes:
         - emptyDir: {}
           name: empty-dir
@@ -182,23 +120,8 @@ spec:
           secret:
             defaultMode: 256
             secretName: etcd-etcd-client-auth
-        - name: etcd-peer-certs
-          secret:
-            defaultMode: 256
-            secretName: etcd-etcd-peer-auth
         - name: etcd-secrets
           projected:
             sources:
               - secret:
                   name: etcd-etcd-root-auth
-  updateStrategy:
-    type: RollingUpdate
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 8Gi
