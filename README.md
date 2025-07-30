@@ -1,3 +1,8 @@
+# ⚠️  Repo Notice
+
+It's likely that this component will be deprecated in the future.
+We don't necessarily recommend that new setups use this component.
+
 # Commodore Component: etcd
 
 This is a [Commodore][commodore] Component for etcd.
