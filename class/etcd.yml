@@ -5,7 +5,7 @@ parameters:
         chart_name: etcd
         version: ${etcd:charts:etcd:version}
         source: ${etcd:charts:etcd:source}
-        output_path: dependencies/etcd/${_instance}/helmcharts/etcd/${etcd:charts:etcd:version}/
+        output_path: ${_base_directory}/helmcharts/etcd/${etcd:charts:etcd:version}/
 
     compile:
       - input_paths:
@@ -21,7 +21,7 @@ parameters:
         input_type: helm
         output_type: yaml
         input_paths:
-          - dependencies/etcd/${_instance}/helmcharts/etcd/${etcd:charts:etcd:version}/
+          - ${_base_directory}/helmcharts/etcd/${etcd:charts:etcd:version}/
         helm_params:
           name: ${etcd:helm_release_name}
           namespace: ${etcd:namespace}
