@@ -6,7 +6,8 @@ metadata:
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: etcd
-    helm.sh/chart: etcd-9.1.0
+    app.kubernetes.io/version: 3.5.12
+    helm.sh/chart: etcd-9.15.2
   name: etcd
   namespace: syn-etcd
 spec:
@@ -26,7 +27,8 @@ spec:
         app.kubernetes.io/instance: etcd
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: etcd
-        helm.sh/chart: etcd-9.1.0
+        app.kubernetes.io/version: 3.5.12
+        helm.sh/chart: etcd-9.15.2
     spec:
       affinity:
         nodeAffinity: null
@@ -36,10 +38,12 @@ spec:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
+                    app.kubernetes.io/component: etcd
                     app.kubernetes.io/instance: etcd
                     app.kubernetes.io/name: etcd
                 topologyKey: kubernetes.io/hostname
               weight: 1
+      automountServiceAccountToken: false
       containers:
         - env:
             - name: BITNAMI_DEBUG
@@ -124,14 +128,26 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-          resources:
-            limits: {}
-            requests: {}
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsGroup: 0
             runAsNonRoot: true
             runAsUser: 1001
+            seLinuxOptions: null
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
+            - mountPath: /opt/bitnami/etcd/conf/
+              name: empty-dir
+              subPath: app-conf-dir
+            - mountPath: /tmp
+              name: empty-dir
+              subPath: tmp-dir
             - mountPath: /bitnami/etcd
               name: data
             - mountPath: /opt/bitnami/etcd/certs/token/
@@ -145,8 +161,13 @@ spec:
               readOnly: true
       securityContext:
         fsGroup: 1001
-      serviceAccountName: default
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      serviceAccountName: etcd
       volumes:
+        - emptyDir: {}
+          name: empty-dir
         - name: etcd-jwt-token
           secret:
             defaultMode: 256
