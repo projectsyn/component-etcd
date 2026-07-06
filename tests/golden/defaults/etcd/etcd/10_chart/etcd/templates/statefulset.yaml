@@ -6,7 +6,8 @@ metadata:
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: etcd
-    helm.sh/chart: etcd-9.1.0
+    app.kubernetes.io/version: 3.6.4
+    helm.sh/chart: etcd-12.0.18
   name: etcd
   namespace: syn-etcd
 spec:
@@ -26,7 +27,8 @@ spec:
         app.kubernetes.io/instance: etcd
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: etcd
-        helm.sh/chart: etcd-9.1.0
+        app.kubernetes.io/version: 3.6.4
+        helm.sh/chart: etcd-12.0.18
     spec:
       affinity:
         nodeAffinity: null
@@ -36,10 +38,12 @@ spec:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
+                    app.kubernetes.io/component: etcd
                     app.kubernetes.io/instance: etcd
                     app.kubernetes.io/name: etcd
                 topologyKey: kubernetes.io/hostname
               weight: 1
+      automountServiceAccountToken: false
       containers:
         - env:
             - name: BITNAMI_DEBUG
@@ -54,8 +58,6 @@ spec:
                   fieldPath: metadata.name
             - name: MY_STS_NAME
               value: etcd
-            - name: ETCDCTL_API
-              value: '3'
             - name: ETCD_ON_K8S
               value: 'yes'
             - name: ETCD_START_FROM_SNAPSHOT
@@ -70,11 +72,8 @@ spec:
               value: info
             - name: ALLOW_NONE_AUTHENTICATION
               value: 'no'
-            - name: ETCD_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: etcd-etcd-root-auth
+            - name: ETCD_ROOT_PASSWORD_FILE
+              value: /opt/bitnami/etcd/secrets/password
             - name: ETCD_AUTH_TOKEN
               value: jwt,priv-key=/opt/bitnami/etcd/certs/token/jwt-token.pem,sign-method=RS256,ttl=10m
             - name: ETCD_ADVERTISE_CLIENT_URLS
@@ -85,6 +84,10 @@ spec:
               value: https://$(MY_POD_NAME).etcd-headless.syn-etcd.svc.cluster.local:2380
             - name: ETCD_LISTEN_PEER_URLS
               value: https://0.0.0.0:2380
+            - name: ETCD_INITIAL_CLUSTER_TOKEN
+              value: etcd-cluster-k8s
+            - name: ETCD_INITIAL_CLUSTER
+              value: etcd-0=https://etcd-0.etcd-headless.syn-etcd.svc.cluster.local:2380
             - name: ETCD_CLUSTER_DOMAIN
               value: etcd-headless.syn-etcd.svc.cluster.local
             - name: ETCD_CERT_FILE
@@ -125,13 +128,34 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
           resources:
-            limits: {}
-            requests: {}
+            limits:
+              cpu: 375m
+              ephemeral-storage: 2Gi
+              memory: 384Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 50Mi
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
             runAsNonRoot: true
             runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
+            - mountPath: /opt/bitnami/etcd/conf/
+              name: empty-dir
+              subPath: app-conf-dir
+            - mountPath: /tmp
+              name: empty-dir
+              subPath: tmp-dir
             - mountPath: /bitnami/etcd
               name: data
             - mountPath: /opt/bitnami/etcd/certs/token/
@@ -143,10 +167,17 @@ spec:
             - mountPath: /opt/bitnami/etcd/certs/peer/
               name: etcd-peer-certs
               readOnly: true
+            - mountPath: /opt/bitnami/etcd/secrets
+              name: etcd-secrets
       securityContext:
         fsGroup: 1001
-      serviceAccountName: default
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      serviceAccountName: etcd
       volumes:
+        - emptyDir: {}
+          name: empty-dir
         - name: etcd-jwt-token
           secret:
             defaultMode: 256
@@ -159,6 +190,11 @@ spec:
           secret:
             defaultMode: 256
             secretName: etcd-etcd-peer-auth
+        - name: etcd-secrets
+          projected:
+            sources:
+              - secret:
+                  name: etcd-etcd-root-auth
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:
