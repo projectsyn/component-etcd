@@ -4,10 +4,12 @@ metadata:
   annotations:
     service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
   labels:
+    app.kubernetes.io/component: etcd
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: etcd
-    helm.sh/chart: etcd-9.1.0
+    app.kubernetes.io/version: 3.6.4
+    helm.sh/chart: etcd-12.0.18
   name: etcd-headless
   namespace: syn-etcd
 spec:
@@ -21,6 +23,7 @@ spec:
       targetPort: peer
   publishNotReadyAddresses: true
   selector:
+    app.kubernetes.io/component: etcd
     app.kubernetes.io/instance: etcd
     app.kubernetes.io/name: etcd
   type: ClusterIP

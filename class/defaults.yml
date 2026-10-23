@@ -23,7 +23,7 @@ parameters:
     charts:
       etcd:
         source: https://charts.bitnami.com/bitnami
-        version: "9.1.0"
+        version: "12.0.18"
 
     helm_release_name: ${_instance}
     helm_values:

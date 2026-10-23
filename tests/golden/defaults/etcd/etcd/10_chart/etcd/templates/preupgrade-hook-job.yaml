@@ -1,0 +1,127 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+  labels:
+    app.kubernetes.io/component: etcd-pre-upgrade-job
+    app.kubernetes.io/instance: etcd
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: etcd
+    app.kubernetes.io/version: 3.6.4
+    helm.sh/chart: etcd-12.0.18
+  name: etcd-pre-upgrade
+  namespace: syn-etcd
+spec:
+  template:
+    metadata:
+      annotations: null
+      labels:
+        app.kubernetes.io/component: etcd-pre-upgrade-job
+        app.kubernetes.io/instance: etcd
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: etcd
+        app.kubernetes.io/version: 3.6.4
+        helm.sh/chart: etcd-12.0.18
+    spec:
+      affinity:
+        nodeAffinity: null
+        podAffinity: null
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: etcd-pre-upgrade-job
+                    app.kubernetes.io/instance: etcd
+                    app.kubernetes.io/name: etcd
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      automountServiceAccountToken: false
+      containers:
+        - args:
+            - /opt/bitnami/scripts/etcd/preupgrade.sh
+          command:
+            - /opt/bitnami/scripts/etcd/entrypoint.sh
+          env:
+            - name: BITNAMI_DEBUG
+              value: 'false'
+            - name: ETCD_ON_K8S
+              value: 'yes'
+            - name: ETCD_DATA_DIR
+              value: /bitnami/etcd/data
+            - name: ETCD_ROOT_PASSWORD_FILE
+              value: /opt/bitnami/etcd/secrets/password
+            - name: ETCD_INITIAL_CLUSTER
+              value: etcd-0=https://etcd-0.etcd-headless.syn-etcd.svc.cluster.local:2379
+            - name: ETCD_CERT_FILE
+              value: /opt/bitnami/etcd/certs/client/cert.pem
+            - name: ETCD_KEY_FILE
+              value: /opt/bitnami/etcd/certs/client/key.pem
+            - name: ETCD_EXTRA_AUTH_FLAGS
+              value: --insecure-skip-tls-verify
+          envFrom: null
+          image: docker.io/bitnamilegacy/etcd:3.5.21-debian-12-r6
+          imagePullPolicy: IfNotPresent
+          name: pre-upgrade-job
+          resources:
+            limits:
+              cpu: 375m
+              ephemeral-storage: 2Gi
+              memory: 384Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 50Mi
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add: []
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /opt/bitnami/etcd/conf/
+              name: empty-dir
+              subPath: app-conf-dir
+            - mountPath: /tmp
+              name: empty-dir
+              subPath: tmp-dir
+            - mountPath: /opt/bitnami/etcd/certs/token/
+              name: etcd-jwt-token
+              readOnly: true
+            - mountPath: /opt/bitnami/etcd/certs/client/
+              name: etcd-client-certs
+              readOnly: true
+            - mountPath: /opt/bitnami/etcd/secrets
+              name: etcd-secrets
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      volumes:
+        - emptyDir: {}
+          name: empty-dir
+        - name: etcd-jwt-token
+          secret:
+            defaultMode: 256
+            secretName: etcd-etcd-token-private-key
+        - name: etcd-client-certs
+          secret:
+            defaultMode: 256
+            secretName: etcd-etcd-client-auth
+        - name: etcd-secrets
+          projected:
+            sources:
+              - secret:
+                  name: etcd-etcd-root-auth
